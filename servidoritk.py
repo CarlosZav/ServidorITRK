@@ -3,8 +3,8 @@ from flask_socketio import SocketIO, emit
 import threading
 import time
 import sqlite3
+import os
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify
 import socket
 
 app = Flask(__name__)
@@ -29,10 +29,29 @@ pausarF = ""
 seteoAnguloA = 0
 seteoAnguloB = 0
 
+# Variables para prueba de planchas
+conteoCiclosPlanchas = 0
+estadoPruebaPlanchas = 0
+tiempoTranscurridoPlanchas = 0
+setCiclosPlanchas = 0
+pausarPlanchas = ""
+setTiempoElevadoPlanchas = 0
+setTiempoBajoPlanchas = 0
+
+
+# Variables secadoras-Rotaciones
+revolucionesSecadoras = 0
+revCambioSecadoras = 0
+velocidadRevoluciones = 0
+pausarSecadorasRot = ""
+conteo_revSecadorasRot = 0
+estado_pruebaSecadorasRot = ""
+tiempo_pruebaSecadorasRot = 0
+velocidad_SecadorasRot = 0
+setRevSecadorasRot = 0
+
 # Función para crear la base de datos y la tabla
-
-
-def create_db():
+"""def create_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     cursor.execute('''
@@ -47,16 +66,13 @@ def create_db():
     conn.close()
 
 # Función para guardar datos cada segundo con el valor del sensor
-
-
 def save_data():
     global sensor_value
     while True:
         hora = datetime.now().strftime('%H:%M:%S')
         fecha = datetime.now().strftime('%Y-%m-%d')
-
-        # Imprimir valor antes de guardar
-        print(f"Guardando en DB: {hora}, {fecha}, {sensor_value}")
+       
+        print(f"Guardando en DB: {hora}, {fecha}, {sensor_value}")  # Imprimir valor antes de guardar
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
         cursor.execute('''
@@ -64,8 +80,9 @@ def save_data():
         ''', (hora, fecha, sensor_value))
         conn.commit()
         conn.close()
-
+       
         time.sleep(1)
+"""
 
 
 @app.route('/')
@@ -251,10 +268,185 @@ def emitir_mensajeFlexiones():
     print("Mensaje enviado a los clientes.")
 
 
+# MAQUINA DE PLANCHAS
+
+# Funciones entre APP Y SERVIDOR PLANCHAS
+
+@socketio.on('datosFromPlanchas')
+def handle_message(data):
+    global setCiclosPlanchas, setTiempoElevadoPlanchas, setTiempoBajoPlanchas, pausarPlanchas
+    # Extrae datos del JSON recibido
+    if data:
+        setCiclosPlanchas = data.get("setCiclos")
+        setTiempoElevadoPlanchas = data.get("setTiempoElevado")
+        setTiempoBajoPlanchas = data.get("setTiempoBajo")
+        pausarPlanchas = data.get("pausar")
+
+        print("seteo ciclos Planchas:", setCiclosPlanchas)
+        print("Tiempo Alto seteado:", setTiempoElevadoPlanchas)
+        print("Tiempo Bajo seteado:", setTiempoBajoPlanchas)
+        print("Pausar Planchas:", pausarPlanchas)
+
+        # Aquí se manda de una vez a la esp
+        datos = {
+            'setCiclos': setCiclosPlanchas,
+            'setTiempoElevado': setTiempoElevadoPlanchas,
+            'setTiempoBajo': setTiempoBajoPlanchas,
+            'pausar': pausarPlanchas,
+        }
+        # Aquí ya se están mandado los datos iniciales a la esp
+        socketio.emit('mensajePlanchas', {'mensaje': datos})
+        print("Mensaje enviado a los clientes.")
+
+
+@socketio.on('datosFromPlanchasPausar')
+def handle_message(data):
+    global pausarPlanchas
+    # Extrae datos del JSON recibido
+    if data:
+        pausarPlanchas = data.get("pausar")
+        print("Pausar: ", pausarPlanchas)
+
+        # Aquí se manda de una vez a la esp
+        datos = {
+            'pausar': pausarPlanchas,
+        }
+        socketio.emit('mensajePlanchasPausar', {'mensaje': datos})
+        print("Mensaje enviado a los clientes.")
+
+
+@socketio.on('recibirDatosServerPlanchas')
+def handle_recibir_todos_los_datos():
+    global conteoCiclosPlanchas, estadoPruebaPlanchas, tiempoTranscurridoPlanchas, setCiclosPlanchas
+    # Send all data back to the client
+    data_store = {
+        'conteoCiclosPlanchas': conteoCiclosPlanchas,
+        'estadoPruebaPlanchas': estadoPruebaPlanchas,
+        'tiempoTranscurridoPlanchas': tiempoTranscurridoPlanchas,
+        'setCiclosPlanchas': setCiclosPlanchas
+    }
+    socketio.emit('datosServerPlanchas', data_store)
+
+
+# EVENTOS SERVIDOR-ESP Planchas
+
+@socketio.on('datosEspPlanchas')
+def handle_message(msg):
+
+    global conteoCiclosPlanchas, estadoPruebaPlanchas, tiempoTranscurridoPlanchas
+
+    if msg:
+        conteoCiclosPlanchas = msg.get("conteo_ciclos")
+        estadoPruebaPlanchas = msg.get("Estado")
+        tiempoTranscurridoPlanchas = msg.get("tiempo_transcurrido")
+
+        print(f"conteo ciclos: {conteoCiclosPlanchas}")
+        print(f"Estado prueba: {estadoPruebaPlanchas}")
+        print(f"Tiempo transcurrido: {tiempoTranscurridoPlanchas}")
+    emit('response', {'data': 'Message received by server'}, broadcast=True)
+
+
+def emitir_mensajeFlexiones():
+    global setCiclosPlanchas, pausarPlanchas, setTiempoElevadoPlanchas, setTiempoBajoPlanchas
+    datos = {
+        'setCiclosPlanchas': setCiclosPlanchas,
+        'setTiempoApagado': setTiempoElevadoPlanchas,
+        'setTiempoPrendido': setTiempoBajoPlanchas,
+        'pausar': pausarPlanchas
+    }
+    socketio.sleep(5)  # No bloqueante
+    socketio.emit('mensajePlanchas', {'mensaje': datos})
+    print("Mensaje enviado a los clientes.")
+
+
+# MAQUINA SECADORA-ROTACIONES
+
+# Funciones entre APP Y SERVIDOR SECADORAS-ROTACIONES
+
+@socketio.on('datosfromSecadorasRot')
+def handle_message(data):
+    global revolucionesSecadoras, revCambioSecadoras, velocidadRevoluciones, pausarSecadorasRot
+    # Extrae datos del JSON recibido
+    if data:
+        revolucionesSecadoras = data.get("revolucionesSecadoras")
+        revCambioSecadoras = data.get("revCambioSecadoras")
+        velocidadRevoluciones = data.get("velocidadRevoluciones")
+        pausarSecadorasRot = data.get("pausarSecadorasRot")
+
+        print("seteo revoluciones secadoras:", revolucionesSecadoras)
+        print("Revoluciones de cambio:", revCambioSecadoras)
+        print("Velocidad seteada RPM:", velocidadRevoluciones)
+        print("Pausar SecadorasRot:", pausarSecadorasRot)
+
+        # Aquí se manda de una vez a la esp
+        datos = {
+            'revolucionesSecadoras': revolucionesSecadoras,
+            'revCambioSecadoras': revCambioSecadoras,
+            'velocidadRevoluciones': velocidadRevoluciones,
+            'pausarSecadorasRot': pausarSecadorasRot,
+        }
+        # Aquí ya se están mandado los datos iniciales a la esp
+        socketio.emit('mensajeSecadorasRot', {'mensaje': datos})
+        print("Mensaje enviado a los clientes.")
+
+
+@socketio.on('datosfromSecadorasRotaciones_pausar')
+def handle_message(data):
+    global pausarSecadorasRot
+    # Extrae datos del JSON recibido
+    if data:
+        pausarSecadorasRot = data.get("pausarSecadorasRot")
+        print("pausarSecadorasRot: ", pausarSecadorasRot)
+
+        # Aquí se manda de una vez a la esp
+        datos = {
+            'pausarSecadorasRot': pausarSecadorasRot,
+        }
+        socketio.emit('mensajeSecadorasRotPausar', {'mensaje': datos})
+        print("Mensaje enviado a los clientes.")
+
+
+@socketio.on('recibirDatosServerSecadorasRot')
+def handle_recibir_todos_los_datos():
+    global conteo_revSecadorasRot, estado_pruebaSecadorasRot, tiempo_pruebaSecadorasRot, velocidad_SecadorasRot, setRevSecadorasRot
+    # Send all data back to the client
+    data_store = {
+        'conteo_revSecadorasRot': conteo_revSecadorasRot,
+        'estado_pruebaSecadorasRot': estado_pruebaSecadorasRot,
+        'tiempo_pruebaSecadorasRot': tiempo_pruebaSecadorasRot,
+        'velocidad_SecadorasRot': velocidad_SecadorasRot,
+        'setRevSecadorasRot': setRevSecadorasRot
+    }
+    socketio.emit('datosServerPlanchas', data_store)
+
+# EVENTOS SERVIDOR-ESP Secadoras-Rotacion
+
+
+@socketio.on('datosEspSecadorasRot')
+def handle_message(msg):
+
+    global conteo_revSecadorasRot, estado_pruebaSecadorasRot, tiempo_pruebaSecadorasRot, velocidad_SecadorasRot, setRevSecadorasRot
+
+    if msg:
+        conteo_revSecadorasRot = msg.get("conteo_revSecadorasRot")
+        estado_pruebaSecadorasRot = msg.get("estado_pruebaSecadorasRot")
+        tiempo_pruebaSecadorasRot = msg.get("tiempo_pruebaSecadorasRot")
+        velocidad_SecadorasRot = msg.get("velocidad_SecadorasRot")
+        setRevSecadorasRot = msg.get("setRevSecadorasRot")
+
+        print(f"conteo_revSecadorasRot: {conteo_revSecadorasRot}")
+        print(f"estado_pruebaSecadorasRot: {estado_pruebaSecadorasRot}")
+        print(f"tiempo_pruebaSecadorasRot: {tiempo_pruebaSecadorasRot}")
+        print(f"velocidad_SecadorasRot: {velocidad_SecadorasRot}")
+        print(f"velocidad_SecadorasRot: {velocidad_SecadorasRot}")
+
+    emit('response', {'data': 'Message received by server'}, broadcast=True)
+
 # socketio.start_background_task(emitir_mensaje)
 
+
 if __name__ == '__main__':
-    create_db()
+   # create_db()
 
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
@@ -262,6 +454,5 @@ if __name__ == '__main__':
     # Mostrar la dirección IP al iniciar el servidor
     print(f"El servidor está corriendo en: http://{local_ip}:5000")
 
-    # Inicia el guardado automático en segundo plano
-    threading.Thread(target=save_data, daemon=True).start()
+   # threading.Thread(target=save_data, daemon=True).start()  # Inicia el guardado automático en segundo plano
     socketio.run(app, host='0.0.0.0', port=5000)
