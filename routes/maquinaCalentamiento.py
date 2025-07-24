@@ -1,4 +1,8 @@
-def init_maquinaCalentamiento(app, socketio, emit):
+def init_maquinaCalentamiento(app, socketio, emit, request):
+
+    from globals import sidCalentamiento, estadoConexionEspCalentamiento
+    import globals
+
     # EVENTOS SERVIDOR-APP Calentamiento
 
     # Variable global para almacenar el valor del sensor más reciente
@@ -9,18 +13,8 @@ def init_maquinaCalentamiento(app, socketio, emit):
     seteo_ciclos = 0
     seteo_tiempo_apagado = 0
     seteo_tiempo_encendido = 0
-
-    @socketio.on('recibirDatosServer')
-    def handle_recibir_todos_los_datos():
-        global sensor_value, estado_ssr, conteo_ciclos, tiempo_transcurrido
-        # Send all data back to the client
-        data_store = {
-            'sensor_value': sensor_value,
-            'estado_ssr': estado_ssr,
-            'conteo_ciclos': conteo_ciclos,
-            'tiempo_transcurrido': tiempo_transcurrido
-        }
-        socketio.emit('datosServidor', data_store)
+    conexionCalentamiento = ""
+    clientIpCalentamiento = ""
 
     @socketio.on('datosfromApp')
     def handle_message(data):
@@ -68,10 +62,53 @@ def init_maquinaCalentamiento(app, socketio, emit):
                 'sensor_value': sensor_value,
                 'estado_ssr': estado_ssr,
                 'conteo_ciclos': conteo_ciclos,
-                'tiempo_transcurrido': tiempo_transcurrido
+                'tiempo_transcurrido': tiempo_transcurrido,
+                'habilitar': "True"
             }
 
             socketio.emit('datosServidor', data_store)
+
+    @socketio.on('eventoConexionSecadorasRot')
+    def handle_recibir_todos_los_datos(dataConexion):
+        global conexionCalentamiento, clientIpCalentamiento
+
+        clientIpCalentamiento = request.headers.get(
+            'X-Forwarded-For', request.remote_addr)
+
+        globals.sidCalentamiento = request.sidCalentameinto
+
+        print(f"IP: {clientIpCalentamiento}")
+        print(f"SID: {globals.sidCalentamiento}")
+
+        if dataConexion:
+            conexionCalentamiento = dataConexion.get("conexion")
+            # Send all data back to the client
+            print(f"conexion: {conexionCalentamiento}")
+
+            if (conexionCalentamiento == "espCalentamiento"):
+
+                globals.estadoConexionEspCalentamiento = "True"
+
+                print(f"{globals.estadoConexionEspCalentamiento}")
+
+                data_store = {
+                    'habilitar': globals.estadoConexionEspCalentamiento
+                }
+
+            # de aqui se manda a la app
+            socketio.emit('eventoConexionEspCalentamiento', data_store)
+
+    @socketio.on('conexionAppCalentamiento')
+    def handle_recibir_todos_los_datos(dataConexionApp):
+
+        print("holaaaaaaaaaaaaaaaa")
+
+        data_store = {
+            'habilitar': globals.estadoConexionEspCalentamiento
+        }
+
+        # de aqui se manda a la app
+        socketio.emit('conexionAppCalentamiento', data_store)
 
     # @socketio.on('event')
     # def handle_custom_event(data):

@@ -6,6 +6,9 @@ import sqlite3
 import os
 from datetime import datetime
 import socket
+import globals
+
+
 from routes.maquinaCalentamiento import init_maquinaCalentamiento
 from routes.maquinaFlexiones import init_maquinaFlexiones
 from routes.maquinaPlanchas import init_maquinaPlanchas
@@ -16,7 +19,8 @@ from routes.maquinaClavijas import init_maquinaClavijas
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*",
+                    ping_timeout=3, ping_interval=1)
 
 
 # Función para crear la base de datos y la tabla
@@ -74,8 +78,38 @@ def handle_connect():
 
 
 @socketio.on('disconnect')
-def handle_disconnect():
-    print("Client disconnected")
+def handle_disconnect(tmr):
+
+    # print("Client disconnected")
+    sid_Desconexion = request.sid
+
+    print(f"Cliente desconectado: {sid_Desconexion}")
+    print(f"parametro dado: {tmr}")
+    print(f"sid anterior: {globals.sid}")
+
+    if sid_Desconexion == globals.sid:
+        print("Desconexión de la ESP específica")
+        globals.estadoConexionEsp = "False"
+
+        print(f"{globals.estadoConexionEsp}")
+
+        data_store = {
+            'habilitar': globals.estadoConexionEsp
+        }
+        # de aqui se manda a la app
+        socketio.emit('eventoConexionEspSecadorasRot', data_store)
+    else:
+        print(" NO IGUAL")
+
+        print(f"{globals.estadoConexionEsp}")
+
+        data_store = {
+            'habilitar': globals.estadoConexionEsp
+        }
+        # de aqui se manda a la app
+        socketio.emit('eventoConexionEspSecadorasRot', data_store)
+    # if sidDesconexion == sid:
+    # print(f"Desconexion de la esp de rotaciones: {sid}")
 
 
 @socketio.on_error_default
@@ -84,13 +118,13 @@ def default_error_handler(e):
     # Aquí podrías agregar lógica para manejar el error adecuadamente.
 
 
-init_maquinaCalentamiento(app, socketio, emit)
+init_maquinaCalentamiento(app, socketio, emit, request)
 
 init_maquinaFlexiones(app, socketio, emit)
 
 init_maquinaPlanchas(app, socketio, emit)
 
-init_maquinaSecadorasRotaciones(app, socketio, emit)
+init_maquinaSecadorasRotaciones(app, socketio, emit, request)
 
 init_maquinaSecadorasFlexiones(app, socketio, emit)
 

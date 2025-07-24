@@ -1,4 +1,4 @@
-def init_maquinaSecadorasRotaciones(app, socketio, emit):
+def init_maquinaSecadorasRotaciones(app, socketio, emit, request):
 
     # Variables secadoras-Rotaciones
     revolucionesSecadoras = 0
@@ -10,6 +10,11 @@ def init_maquinaSecadorasRotaciones(app, socketio, emit):
     tiempo_pruebaSecadorasRot = 0
     velocidad_SecadorasRot = 0
     setRevSecadorasRot = 0
+    conexionSecadorasRotacion = ""
+    clientIpSecadorasRot = ""
+
+    from globals import sid, estadoConexionEsp
+    import globals
 
     # MAQUINA SECADORA-ROTACIONES
 
@@ -86,13 +91,56 @@ def init_maquinaSecadorasRotaciones(app, socketio, emit):
             print(f"estado_pruebaSecadorasRot: {estado_pruebaSecadorasRot}")
             print(f"tiempo_pruebaSecadorasRot: {tiempo_pruebaSecadorasRot}")
             print(f"velocidad_SecadorasRot: {velocidad_SecadorasRot}")
-            print(f"velocidad_SecadorasRot: {velocidad_SecadorasRot}")
+            print(f"setRevSecadorasRot: {setRevSecadorasRot}")
 
             data_store = {
                 'conteo_revSecadorasRot': conteo_revSecadorasRot,
                 'estado_pruebaSecadorasRot': estado_pruebaSecadorasRot,
                 'tiempo_pruebaSecadorasRot': tiempo_pruebaSecadorasRot,
                 'velocidad_SecadorasRot': velocidad_SecadorasRot,
+                'setRevSecadorasRot': setRevSecadorasRot,
+                'habilitar': "True"
             }
-
         socketio.emit('datosServerPlanchas', data_store)
+
+    @socketio.on('eventoConexionSecadorasRot')
+    def handle_recibir_todos_los_datos(dataConexion):
+        global conexionSecadorasRotacion, clientIpSecadorasRot, habilitar
+
+        clientIpSecadorasRot = request.headers.get(
+            'X-Forwarded-For', request.remote_addr)
+
+        globals.sid = request.sid
+
+        print(f"IP: {clientIpSecadorasRot}")
+        print(f"SID: {globals.sid}")
+
+        if dataConexion:
+            conexionSecadorasRotacion = dataConexion.get("conexion")
+            # Send all data back to the client
+            print(f"conexion: {conexionSecadorasRotacion}")
+
+            if (conexionSecadorasRotacion == "espSecadorasRotConexion"):
+
+                globals.estadoConexionEsp = "True"
+
+                print(f"{globals.estadoConexionEsp}")
+
+                data_store = {
+                    'habilitar': globals.estadoConexionEsp
+                }
+
+            # de aqui se manda a la app
+            socketio.emit('eventoConexionEspSecadorasRot', data_store)
+
+    @socketio.on('conexionAppSecadorasRot')
+    def handle_recibir_todos_los_datos(dataConexionApp):
+
+        print("holaaaaaaaaaaaaaaaa")
+
+        data_store = {
+            'habilitar': globals.estadoConexionEsp
+        }
+
+        # de aqui se manda a la app
+        socketio.emit('conexionAppSecadorasRotDev', data_store)

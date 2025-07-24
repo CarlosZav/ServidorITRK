@@ -1,5 +1,8 @@
 def init_calibracionSecadoras(app, socketio, emit):
 
+    from globals import sid, estadoConexionEsp
+    import globals
+
     estadoCalibracion = ""
     sentido = ""
     gradosCalibrar = 0
@@ -23,6 +26,12 @@ def init_calibracionSecadoras(app, socketio, emit):
             socketio.emit('mensajeCalibrarSecadoras', {'mensaje': datos})
             print("Mensaje enviado a los clientes.")
 
+    @socketio.on('datosfromCalibrarSecadorasConfirmar')
+    def handle_message(data):
+        socketio.emit('mensajeCalibrarSecadorasConfirmar', {
+                      'mensaje': "confirmacionEstablecerCero"})
+        print("Mensaje enviado a los clientes confirmacion de calibracion")
+
     @socketio.on('recibirDatosServidorCalibracionSecadoras')
     def handle_recibir_todos_los_datos():
         global estadoCalibracion
@@ -34,16 +43,15 @@ def init_calibracionSecadoras(app, socketio, emit):
 
     # EVENTOS SERVIDOR-ESP Flexiones
 
-    @socketio.on('datosEspCalibracionSecadoras')
+    @socketio.on('calibrarEspConfirmacionSecadoras')
     def handle_message(msg):
 
         global estadoCalibracion
         print(f"Message received: {msg}")
 
         if msg:
-            estadoCalibracion = msg.get("estadoCalibracion")
+            estadoCalibracion = msg.get("conexion")
 
             print(f"estado calibracion: {estadoCalibracion}")
 
-        emit('response', {
-             'data': 'Message received by server'}, broadcast=True)
+        socketio.emit('calibracionConfirmacionSecadorasApp', msg)
