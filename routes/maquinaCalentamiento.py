@@ -67,7 +67,7 @@ def init_maquinaCalentamiento(app, socketio, emit, request):
             }
 
             socketio.emit('datosServidor', data_store)
-
+    """
     @socketio.on('eventoConexionSecadorasRot')
     def handle_recibir_todos_los_datos(dataConexion):
         global conexionCalentamiento, clientIpCalentamiento
@@ -75,7 +75,7 @@ def init_maquinaCalentamiento(app, socketio, emit, request):
         clientIpCalentamiento = request.headers.get(
             'X-Forwarded-For', request.remote_addr)
 
-        globals.sidCalentamiento = request.sidCalentameinto
+        globals.sidCalentamiento = request.sid
 
         print(f"IP: {clientIpCalentamiento}")
         print(f"SID: {globals.sidCalentamiento}")
@@ -109,8 +109,8 @@ def init_maquinaCalentamiento(app, socketio, emit, request):
 
         # de aqui se manda a la app
         socketio.emit('conexionAppCalentamiento', data_store)
-
+    """
     # @socketio.on('event')
     # def handle_custom_event(data):
-        # print(f"Custom event received: {data}")
-        # emit('response', {'data': 'Event received by server'}, broadcast=True)
+    # print(f"Custom event received: {data}")
+    # emit('response', {'data': 'Event received by server'}, broadcast=True)
