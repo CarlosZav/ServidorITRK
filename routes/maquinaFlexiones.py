@@ -50,7 +50,7 @@ def init_maquinaFlexiones(app, socketio, emit):
             socketio.emit('mensajeFlexiones_pausar', {'mensaje': datos})
             print("Mensaje enviado a los clientes.")
 
-    @socketio.on('recibirDatosServerFlexiones')
+    @socketio.on('recibirDatosServerFlexionesOG')
     def handle_recibir_todos_los_datos():
         global conteo_ciclosFlex, estado_pruebaFlex, tiempo_transcurridoFlex
         # Send all data back to the client
