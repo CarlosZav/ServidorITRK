@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 from flask_socketio import SocketIO, emit
 import threading
 import time
@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 import socket
 import globals
-
+import asyncio
 
 from routes.maquinaCalentamiento import init_maquinaCalentamiento
 from routes.maquinaFlexiones import init_maquinaFlexiones
@@ -16,12 +16,16 @@ from routes.maquinaSecadorasRotaciones import init_maquinaSecadorasRotaciones
 from routes.maquinaSecadorasFlexiones import init_maquinaSecadorasFlexiones
 from routes.calibracionSecadoras import init_calibracionSecadoras
 from routes.maquinaClavijas import init_maquinaClavijas
+from routes.maquinaLavadoras import init_maquinaLavadoras
+from routes.maquinaLavadorasFuerza import init_maquinaLavadorasFuerza
+from routes.calibracionLavadoras import init_calibracionLavadoras
+from routes.maquinaMicroondas import init_maquinaHornos
+from routes.temperaturaHorno import init_temperaturaHorno
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*",
                     ping_timeout=3, ping_interval=1)
-
 
 # Función para crear la base de datos y la tabla
 """def create_db():
@@ -132,8 +136,17 @@ init_calibracionSecadoras(app, socketio, emit)
 
 init_maquinaClavijas(app, socketio, emit)
 
-# socketio.start_background_task(emitir_mensaje)
+init_maquinaLavadoras(app, socketio, emit)
 
+init_maquinaLavadorasFuerza(app, socketio, emit)
+
+init_calibracionLavadoras(app, socketio, emit)
+
+init_maquinaHornos(app, socketio, emit)
+
+init_temperaturaHorno(app, socketio, emit)
+
+# socketio.start_background_task(emitir_mensaje)
 
 if __name__ == '__main__':
    # create_db()

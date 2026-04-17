@@ -1,13 +1,10 @@
-def init_calibracionSecadoras(app, socketio, emit):
+def init_calibracionLavadoras(app, socketio, emit):
 
-    from globals import sid, estadoConexionEsp
-    import globals
+    estadoCalibracionLavadoras = ""
+    sentidoLavadoras = ""
+    gradosCalibrarLavadoras = 0
 
-    estadoCalibracion = ""
-    sentido = ""
-    gradosCalibrar = 0
-
-    @socketio.on('datosfromCalibrarSecadoras')
+    @socketio.on('datosfromCalibrarLavadoras')
     def handle_message(data):
         global sentido, gradosCalibrar
         # Extrae datos del JSON recibido
@@ -23,21 +20,21 @@ def init_calibracionSecadoras(app, socketio, emit):
                 'gradosCalibrar': gradosCalibrar,
                 'sentido': sentido,
             }
-            socketio.emit('mensajeCalibrarSecadoras', {'mensaje': datos})
+            socketio.emit('mensajeCalibrarLavadoras', {'mensaje': datos})
             print("Mensaje enviado a los clientes.")
 
-    @socketio.on('recibirDatosServidorCalibracionSecadoras')
+    @socketio.on('recibirDatosServidorCalibracionLavadoras')
     def handle_recibir_todos_los_datos():
         global estadoCalibracion
         # Send all data back to the client
         data_store = {
             'estadoCalibracion': estadoCalibracion,
         }
-        socketio.emit('datosServidorCalibracionSecadoras', data_store)
+        socketio.emit('datosServidorCalibracionLavadoras', data_store)
 
     # EVENTOS SERVIDOR-ESP Flexiones
 
-    @socketio.on('calibrarEspConfirmacionSecadoras')
+    @socketio.on('calibrarEspConfirmacionLavadoras')
     def handle_message(msg):
 
         global estadoCalibracion
@@ -48,4 +45,4 @@ def init_calibracionSecadoras(app, socketio, emit):
 
             print(f"estado calibracion: {estadoCalibracion}")
 
-        socketio.emit('calibracionConfirmacionSecadorasApp', msg)
+        socketio.emit('calibracionConfirmacionLavadorasApp', msg)
