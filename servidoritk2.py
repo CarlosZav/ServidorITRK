@@ -21,6 +21,7 @@ from routes.maquinaLavadorasFuerza import init_maquinaLavadorasFuerza
 from routes.calibracionLavadoras import init_calibracionLavadoras
 from routes.maquinaMicroondas import init_maquinaHornos
 from routes.temperaturaHorno import init_temperaturaHorno
+from routes.maquinaTostadoras import init_maquinaMultifuncional
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -145,6 +146,8 @@ init_calibracionLavadoras(app, socketio, emit)
 init_maquinaHornos(app, socketio, emit)
 
 init_temperaturaHorno(app, socketio, emit)
+
+init_maquinaMultifuncional(app, socketio, emit)
 
 # socketio.start_background_task(emitir_mensaje)
 

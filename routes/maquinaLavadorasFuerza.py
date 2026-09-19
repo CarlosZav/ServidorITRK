@@ -16,17 +16,15 @@ def init_maquinaLavadorasFuerza(app, socketio, emit):
 
     @socketio.on('datosFromLavadorasFuerza')
     def handle_message(data):
-        global ciclosLavadorasFuerza, velocidadLavadorasFuerza, pausarLavadorasFuerza, fuerzaInicial, fuerzaFinal
+        global ciclosLavadorasFuerza, pausarLavadorasFuerza, fuerzaInicial, fuerzaFinal
         # Extrae datos del JSON recibido
         if data:
             ciclosLavadorasFuerza = data.get("ciclosLavadorasFuerza")
-            velocidadLavadorasFuerza = data.get("velocidadLavadorasFuerza")
             pausarLavadorasFuerza = data.get("pausarLavadorasFuerza")
             fuerzaInicial = data.get("fuerzaInicial")
             fuerzaFinal = data.get("fuerzaFinal")
 
             print("seteo Ciclos lavadoras fuerza:", ciclosLavadorasFuerza)
-            print("Velocidad:", velocidadLavadorasFuerza)
             print("pausar:", pausarLavadorasFuerza)
             print("Fuerza Final:", fuerzaFinal)
             print("Fuerza Inicial:", fuerzaInicial)
@@ -34,7 +32,6 @@ def init_maquinaLavadorasFuerza(app, socketio, emit):
             # Aquí se manda de una vez a la esp
             datos = {
                 'ciclosLavadorasFuerza': ciclosLavadorasFuerza,
-                'velocidadLavadorasFuerza': velocidadLavadorasFuerza,
                 'pausarLavadorasFuerza': pausarLavadorasFuerza,
                 'fuerzaInicial': fuerzaInicial,
                 'fuerzaFinal': fuerzaFinal,
@@ -71,7 +68,6 @@ def init_maquinaLavadorasFuerza(app, socketio, emit):
                 "conteoCiclosLavadorasFuerza")
             estadoLavadorasFuerza = msg.get("estadoLavadorasFuerza")
             tiempoLavadorasFuerza = msg.get("tiempoLavadorasFuerza")
-            velocidadLavadorasFuerza = msg.get("velocidadLavadorasFuerza")
             fuerzaEjercida = msg.get("fuerzaEjercida")
             ciclosLavadorasFuerza = msg.get("ciclosLavadorasFuerza")
             fuerzaFinal = msg.get("fuerzaFinal")
@@ -88,7 +84,6 @@ def init_maquinaLavadorasFuerza(app, socketio, emit):
                 'conteoCiclosLavadorasFuerza': conteoCiclosLavadorasFuerza,
                 'estadoLavadorasFuerza': estadoLavadorasFuerza,
                 'tiempoLavadorasFuerza': tiempoLavadorasFuerza,
-                'velocidadLavadorasFuerza': velocidadLavadorasFuerza,
                 'fuerzaEjercida': fuerzaEjercida,
                 'ciclosLavadorasFuerza': ciclosLavadorasFuerza,
                 'fuerzaFinal': fuerzaFinal,
